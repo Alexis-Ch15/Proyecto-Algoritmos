@@ -346,3 +346,131 @@ def register(users):
     })
     guardar_usuarios(users)
     print("Registro exitoso")
+    def ver_centros(centros):
+    print("\n--- CENTROS ---")
+    for c in centros:
+        print(f"{c.cid} | {c.nombre} | {c.region} | {c.subregion}")
+
+def agregar_centro(centros):
+    cid = int(input("ID: "))
+    nombre = input("Nombre: ")
+    region = input("Región: ")
+    sub = input("Subregión: ")
+    centros.append(core.Centro(cid, nombre, region, sub))
+    print("Centro agregado")
+
+def eliminar_centro(centros, rutas):
+    cid = int(input("ID del centro a eliminar: "))
+    centros[:] = [c for c in centros if c.cid != cid]
+    rutas[:] = core.eliminar_rutas_de_centro(rutas, cid)
+    print("Centro y rutas asociadas eliminados")
+
+def ver_rutas(rutas):
+    print("\n--- RUTAS ---")
+    for r in rutas:
+        print(f"{r.a} <-> {r.b} | Distancia {r.distancia} | Costo {r.costo}")
+
+def agregar_ruta(rutas):
+    a = int(input("Centro A: "))
+    b = int(input("Centro B: "))
+    if core.existe_ruta(rutas, a, b):
+        print("La ruta ya existe")
+        return
+    d = float(input("Distancia: "))
+    c = float(input("Costo: "))
+    rutas.append(core.Ruta(a, b, d, c))
+    print("Ruta agregada")
+
+# ---------------- CLIENTE ----------------
+
+def ver_mapa(rutas):
+    g = core.build_graph(rutas)
+    for k in g:
+        print(k, "->", g[k])
+
+def ruta_optima(rutas):
+    a = int(input("Origen ID: "))
+    b = int(input("Destino ID: "))
+    g = core.build_graph(rutas)
+    cost, path = core.dijkstra_cost(g, a, b)
+    if cost == math.inf:
+        print("No hay ruta")
+    else:
+        print("Costo:", cost)
+        print("Ruta:", " -> ".join(map(str, path)))
+
+def bfs(rutas):
+    start = int(input("Inicio: "))
+    steps = int(input("Saltos: "))
+    g = core.build_graph(rutas)
+    print(core.bfs_near(g, start, steps))
+
+def dfs(rutas):
+    start = int(input("Inicio: "))
+    g = core.build_graph(rutas)
+    print(core.dfs_traverse(g, start))
+
+def ver_arbol(centros):
+    for line in core.lineas_arbol_regiones(centros):
+        print(line)
+
+
+def main():
+    core.asegurar_archivos()
+    users = core.leer_usuarios()
+    centros, rutas = core.leer_centros_rutas()
+
+    while True:
+        op = menu_principal()
+
+        if op == "1":
+            user = login(users)
+            if not user:
+                print("Credenciales incorrectas")
+                continue
+
+            if user["rol"] == "admin":
+                while True:
+                    op = menu_admin()
+                    if op == "1":
+                        ver_centros(centros)
+                    elif op == "2":
+                        agregar_centro(centros)
+                    elif op == "3":
+                        eliminar_centro(centros, rutas)
+                    elif op == "4":
+                        ver_rutas(rutas)
+                    elif op == "5":
+                        agregar_ruta(rutas)
+                    elif op == "6":
+                        core.guardar_centros_rutas(centros, rutas)
+                        print("Datos guardados")
+                    elif op == "7":
+                        break
+                    pause()
+            else:
+                while True:
+                    op = menu_cliente()
+                    if op == "1":
+                        ver_mapa(rutas)
+                    elif op == "2":
+                        ruta_optima(rutas)
+                    elif op == "3":
+                        bfs(rutas)
+                    elif op == "4":
+                        dfs(rutas)
+                    elif op == "5":
+                        ver_arbol(centros)
+                    elif op == "6":
+                        break
+                    pause()
+
+        elif op == "2":
+            register(users)
+
+        elif op == "3":
+            print("Saliendo...")
+            break
+
+main()
+
