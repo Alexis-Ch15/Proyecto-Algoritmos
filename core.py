@@ -169,4 +169,43 @@ def merge_sort(items, clave_orden):
     mezclaFinal.extend(derecha[indiceDerecha:])
     return mezclaFinal
 
+def build_graph(rutas):
+    g = {}
+    for r in rutas:
+        g.setdefault(r.a, []).append((r.b, r.distancia, r.costo))
+        g.setdefault(r.b, []).append((r.a, r.distancia, r.costo))
+    return g
 
+
+def dijkstra_cost(g, start, goal):
+    if start == goal:
+        return 0.0, [start]
+    dist, prev = {}, {}
+    for k in g:
+        dist[k] = math.inf
+        prev[k] = None
+    dist[start] = 0.0
+    pq = [(0.0, start)]
+    seen = {}
+    while pq:
+        d, u = heapq.heappop(pq)
+        if seen.get(u):
+            continue
+        seen[u] = True
+        if u == goal:
+            break
+        for v, _, cost in g.get(u, []):
+            nd = d + cost
+            if nd < dist.get(v, math.inf):
+                dist[v] = nd
+                prev[v] = u
+                heapq.heappush(pq, (nd, v))
+    if dist.get(goal, math.inf) == math.inf:
+        return math.inf, []
+    path = []
+    cur = goal
+    while cur is not None:
+        path.append(cur)
+        cur = prev.get(cur)
+    path.reverse()
+    return dist[goal], path
