@@ -126,19 +126,19 @@ def leer_usuarios():
     return users
 
 
-def guardar_usuarios(users):
+def guardar_usuarios(usuarios):
     with open("usuarios.txt", "w", encoding="utf-8") as f:
-        for u in users:
+        for usuario in usuarios:
             f.write(f"{u['email']}|{u['password']}|{u['nombre']}|{u['identificacion']}|{u['edad']}|{u['rol']}\n")
 
 def email_valido(s):
     return re.match(r"^[A-Za-z0-9._%+-]+@gmail\.com$", s) is not None
 
 
-def password_valida(pw):
-    if len(pw) < 8:
+def password_valida(contrasenia):
+    if len(contrasenia) < 8:
         return False
-    return any("a" <= c <= "z" for c in pw) and any("A" <= c <= "Z" for c in pw) and any("0" <= c <= "9" for c in pw)
+    return any("a" <= c <= "z" for c in contrasenia) and any("A" <= c <= "Z" for c in contrasenia) and any("0" <= c <= "9" for c in contrasenia)
 
 
 def buscar_centro(centros, cid):
@@ -148,25 +148,25 @@ def buscar_centro(centros, cid):
     return None
 
 
-def merge_sort(items, key_fn):
-    a = items[:]
-    if len(a) <= 1:
-        return a
-    mid = len(a) // 2
-    left = merge_sort(a[:mid], key_fn)
-    right = merge_sort(a[mid:], key_fn)
-    out = []
-    i = 0
-    j = 0
-    while i < len(left) and j < len(right):
-        if key_fn(left[i]) <= key_fn(right[j]):
-            out.append(left[i])
-            i += 1
+def merge_sort(items, clave_orden):
+    lista = items[:]
+    if len(lista) <= 1:
+        return lista
+    medio = len(lista) // 2
+    izquierda = merge_sort(lista[:medio], clave_orden)
+    derecha = merge_sort(lista[medio:], clave_orden)
+    mezclaFinal = []
+    indiceIzquierda = 0
+    indiceDerecha = 0
+    while indiceIzquierda < len(izquierda) and indiceDerecha < len(derecha):
+        if clave_orden(izquierda[indiceIzquierda]) <= clave_orden(derecha[indiceDerecha]):
+            mezclaFinal.append(izquierda[indiceIzquierda])
+            indiceIzquierda += 1
         else:
-            out.append(right[j])
-            j += 1
-    out.extend(left[i:])
-    out.extend(right[j:])
-    return out
+            mezclaFinal.append(derecha[indiceDerecha])
+            indiceDerecha += 1
+    mezclaFinal.extend(izquierda[indiceIzquierda:])
+    mezclaFinal.extend(derecha[indiceDerecha:])
+    return mezclaFinal
 
 
