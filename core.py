@@ -128,7 +128,7 @@ def leer_usuarios():
 
 def guardar_usuarios(usuarios):
     with open("usuarios.txt", "w", encoding="utf-8") as f:
-        for usuario in usuarios:
+        for u in usuarios:
             f.write(f"{u['email']}|{u['password']}|{u['nombre']}|{u['identificacion']}|{u['edad']}|{u['rol']}\n")
 
 def email_valido(s):
@@ -146,6 +146,67 @@ def buscar_centro(centros, cid):
         if c.cid == cid:
             return c
     return None
+
+def buscar_centro_binaria(centros_ordenados_por_id, cid):
+    lo, hi = 0, len(centros_ordenados_por_id) - 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        v = centros_ordenados_por_id[mid].cid
+        if v == cid:
+            return centros_ordenados_por_id[mid]
+        if v < cid:
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return None
+
+
+def buscar_centro_interpolacion(centros_ordenados_por_id, cid):
+    lo, hi = 0, len(centros_ordenados_por_id) - 1
+    while lo <= hi and centros_ordenados_por_id[lo].cid <= cid <= centros_ordenados_por_id[hi].cid:
+        lo_id = centros_ordenados_por_id[lo].cid
+        hi_id = centros_ordenados_por_id[hi].cid
+        if hi_id == lo_id:
+            return centros_ordenados_por_id[lo] if lo_id == cid else None
+
+        pos = lo + int((cid - lo_id) * (hi - lo) / (hi_id - lo_id))
+        pos_id = centros_ordenados_por_id[pos].cid
+
+        if pos_id == cid:
+            return centros_ordenados_por_id[pos]
+        if pos_id < cid:
+            lo = pos + 1
+        else:
+            hi = pos - 1
+    return None
+
+
+def buscar_centro_menu(centros):
+    cid = int(input("ID a buscar: "))
+
+    print("\nMétodo:")
+    print("1. Lineal")
+    print("2. Binaria")
+    print("3. Interpolación")
+    op = input("Opción: ")
+
+    if op == "1":
+        c = buscar_centro(centros, cid)
+    else:
+        # Necesita lista ordenada por ID
+        ordenados = merge_sort(centros, lambda x: x.cid)
+        if op == "2":
+            c = buscar_centro_binaria(ordenados, cid)
+        elif op == "3":
+            c = buscar_centro_interpolacion(ordenados, cid)
+        else:
+            print("Opción inválida")
+            return
+
+    if c:
+        print(f"Encontrado: {c.cid} | {c.nombre} | {c.region} | {c.subregion}")
+    else:
+        print("No encontrado")
 
 
 def merge_sort(items, clave_orden):
@@ -168,6 +229,62 @@ def merge_sort(items, clave_orden):
     mezclaFinal.extend(izquierda[indiceIzquierda:])
     mezclaFinal.extend(derecha[indiceDerecha:])
     return mezclaFinal
+
+def bubble_sort(items, clave):
+    arr = items[:]
+    n = len(arr)
+    for i in range(n):
+        for j in range(0, n - i - 1):
+            if clave(arr[j]) > clave(arr[j + 1]):
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]
+    return arr
+
+
+def insertion_sort(items, clave):
+    arr = items[:]
+    for i in range(1, len(arr)):
+        x = arr[i]
+        j = i - 1
+        while j >= 0 and clave(arr[j]) > clave(x):
+            arr[j + 1] = arr[j]
+            j -= 1
+        arr[j + 1] = x
+    return arr
+
+
+def selection_sort(items, clave):
+    arr = items[:]
+    n = len(arr)
+    for i in range(n):
+        min_i = i
+        for j in range(i + 1, n):
+            if clave(arr[j]) < clave(arr[min_i]):
+                min_i = j
+        arr[i], arr[min_i] = arr[min_i], arr[i]
+    return arr
+
+
+def quick_sort(items, clave):
+    arr = items[:]
+    _quick_sort_inplace(arr, 0, len(arr) - 1, clave)
+    return arr
+
+def _quick_sort_inplace(arr, lo, hi, clave):
+    if lo >= hi:
+        return
+    p = _partition(arr, lo, hi, clave)
+    _quick_sort_inplace(arr, lo, p - 1, clave)
+    _quick_sort_inplace(arr, p + 1, hi, clave)
+
+def _partition(arr, lo, hi, clave):
+    pivot = clave(arr[hi])
+    i = lo
+    for j in range(lo, hi):
+        if clave(arr[j]) <= pivot:
+            arr[i], arr[j] = arr[j], arr[i]
+            i += 1
+    arr[i], arr[hi] = arr[hi], arr[i]
+    return i
 
 def build_graph(rutas):
     g = {}
@@ -297,11 +414,15 @@ def menu_admin():
     print("1. Ver centros")
     print("2. Agregar centro")
     print("3. Eliminar centro")
-    print("4. Ver rutas")
-    print("5. Agregar ruta")
-    print("6. Guardar cambios")
-    print("7. Cerrar sesión")
+    print("4. Actualizar centro")          
+    print("5. Ver rutas")
+    print("6. Agregar ruta")
+    print("7. Listar ordenado")            
+    print("8. Buscar centro")              
+    print("9. Guardar cambios")
+    print("10. Cerrar sesión")
     return input("Opción: ")
+
 
 def menu_cliente():
     print("\n--- MENÚ CLIENTE ---")
@@ -310,8 +431,13 @@ def menu_cliente():
     print("3. BFS")
     print("4. DFS")
     print("5. Árbol de regiones")
-    print("6. Cerrar sesión")
+    print("6. Seleccionar centros para envío")     
+    print("7. Ver selección y costo total")        
+    print("8. Eliminar centro de selección")       
+    print("9. Guardar ruta del cliente")           
+    print("10. Cerrar sesión")
     return input("Opción: ")
+
 
 def login(users):
     email = input("Email: ").strip()
@@ -346,7 +472,8 @@ def register(users):
     })
     guardar_usuarios(users)
     print("Registro exitoso")
-    def ver_centros(centros):
+
+def ver_centros(centros):
     print("\n--- CENTROS ---")
     for c in centros:
         print(f"{c.cid} | {c.nombre} | {c.region} | {c.subregion}")
@@ -356,13 +483,34 @@ def agregar_centro(centros):
     nombre = input("Nombre: ")
     region = input("Región: ")
     sub = input("Subregión: ")
-    centros.append(core.Centro(cid, nombre, region, sub))
+    centros.append(Centro(cid, nombre, region, sub))
     print("Centro agregado")
+
+def actualizar_centro(centros):
+    cid = int(input("ID del centro a actualizar: "))
+    c = buscar_centro(centros, cid)
+    if not c:
+        print("Centro no encontrado")
+        return
+
+    print("Deja vacío para mantener el valor actual.")
+    nuevo_nombre = input(f"Nombre ({c.nombre}): ").strip()
+    nueva_region = input(f"Región ({c.region}): ").strip()
+    nueva_sub = input(f"Subregión ({c.subregion}): ").strip()
+
+    if nuevo_nombre:
+        c.nombre = nuevo_nombre
+    if nueva_region:
+        c.region = nueva_region
+    if nueva_sub:
+        c.subregion = nueva_sub
+
+    print("Centro actualizado")
 
 def eliminar_centro(centros, rutas):
     cid = int(input("ID del centro a eliminar: "))
     centros[:] = [c for c in centros if c.cid != cid]
-    rutas[:] = core.eliminar_rutas_de_centro(rutas, cid)
+    rutas[:] = eliminar_rutas_de_centro(rutas, cid)
     print("Centro y rutas asociadas eliminados")
 
 def ver_rutas(rutas):
@@ -373,26 +521,81 @@ def ver_rutas(rutas):
 def agregar_ruta(rutas):
     a = int(input("Centro A: "))
     b = int(input("Centro B: "))
-    if core.existe_ruta(rutas, a, b):
+    if existe_ruta(rutas, a, b):
         print("La ruta ya existe")
         return
     d = float(input("Distancia: "))
     c = float(input("Costo: "))
-    rutas.append(core.Ruta(a, b, d, c))
+    rutas.append(Ruta(a, b, d, c))
     print("Ruta agregada")
+
+def listar_ordenado_admin(centros, rutas):
+    print("\n¿Qué quieres ordenar?")
+    print("1. Centros por ID")
+    print("2. Centros por nombre")
+    print("3. Rutas por costo")
+    print("4. Rutas por distancia")
+    target = input("Opción: ")
+
+    print("\nAlgoritmo:")
+    print("1. Burbuja")
+    print("2. Inserción")
+    print("3. Selección")
+    print("4. Merge Sort")
+    print("5. Quick Sort")
+    alg = input("Opción: ")
+
+    if target == "1":
+        items = centros
+        key = lambda c: c.cid
+    elif target == "2":
+        items = centros
+        key = lambda c: c.nombre.lower()
+    elif target == "3":
+        items = rutas
+        key = lambda r: r.costo
+    elif target == "4":
+        items = rutas
+        key = lambda r: r.distancia
+    else:
+        print("Opción inválida")
+        return
+
+    if alg == "1":
+        ordered = bubble_sort(items, key)
+    elif alg == "2":
+        ordered = insertion_sort(items, key)
+    elif alg == "3":
+        ordered = selection_sort(items, key)
+    elif alg == "4":
+        ordered = merge_sort(items, key)
+    elif alg == "5":
+        ordered = quick_sort(items, key)
+    else:
+        print("Algoritmo inválido")
+        return
+
+    print("\n--- RESULTADO ORDENADO ---")
+    if items is centros:
+        for c in ordered:
+            print(f"{c.cid} | {c.nombre} | {c.region} | {c.subregion}")
+    else:
+        for r in ordered:
+            print(f"{r.a} <-> {r.b} | Distancia {r.distancia} | Costo {r.costo}")
+
 
 # ---------------- CLIENTE ----------------
 
 def ver_mapa(rutas):
-    g = core.build_graph(rutas)
+    g = build_graph(rutas)
     for k in g:
         print(k, "->", g[k])
 
 def ruta_optima(rutas):
     a = int(input("Origen ID: "))
     b = int(input("Destino ID: "))
-    g = core.build_graph(rutas)
-    cost, path = core.dijkstra_cost(g, a, b)
+    g = build_graph(rutas)
+    cost, path = dijkstra_costo(g, a, b)
     if cost == math.inf:
         print("No hay ruta")
     else:
@@ -402,23 +605,116 @@ def ruta_optima(rutas):
 def bfs(rutas):
     start = int(input("Inicio: "))
     steps = int(input("Saltos: "))
-    g = core.build_graph(rutas)
-    print(core.bfs_near(g, start, steps))
+    g = build_graph(rutas)
+    print(bfs_cercanos(g, start, steps))
 
 def dfs(rutas):
     start = int(input("Inicio: "))
-    g = core.build_graph(rutas)
-    print(core.dfs_traverse(g, start))
+    g = build_graph(rutas)
+    print(dfs_recorrido(g, start))
 
 def ver_arbol(centros):
-    for line in core.lineas_arbol_regiones(centros):
+    for line in lineas_arbol_regiones(centros):
         print(line)
+
+def seleccionar_centros(centros, seleccion):
+    ids_validos = {c.cid for c in centros}
+    print("\n--- SELECCIÓN DE CENTROS ---")
+    print("Ingresa IDs (mínimo 2). Escribe 0 para terminar.")
+
+    while True:
+        cid = int(input("ID: "))
+        if cid == 0:
+            break
+        if cid not in ids_validos:
+            print("ID no existe")
+            continue
+        if cid in seleccion:
+            print("Ya está en la selección")
+            continue
+        seleccion.append(cid)
+        print("Agregado.")
+
+    print("Selección actual:", seleccion)
+    if len(seleccion) < 2:
+        print("⚠ Debes seleccionar mínimo 2 centros.")
+
+
+def eliminar_de_seleccion(seleccion):
+    if not seleccion:
+        print("No hay selección")
+        return
+    cid = int(input("ID a eliminar: "))
+    if cid in seleccion:
+        seleccion.remove(cid)
+        print("Eliminado")
+    else:
+        print("Ese ID no está en la selección")
+
+
+def costo_total_seleccion(seleccion, rutas):
+    """
+    Suma el costo de ir del centro i al i+1 usando Dijkstra por COSTO.
+    """
+    if len(seleccion) < 2:
+        return math.inf, []
+
+    g = build_graph(rutas)
+    total = 0.0
+    ruta_total = []
+
+    for i in range(len(seleccion) - 1):
+        a = seleccion[i]
+        b = seleccion[i + 1]
+        cost, path = dijkstra_costo(g, a, b)
+        if cost == math.inf:
+            return math.inf, []
+        total += cost
+
+        if not ruta_total:
+            ruta_total.extend(path)
+        else:
+            ruta_total.extend(path[1:])  # evita repetir el nodo de unión
+
+    return total, ruta_total
+
+
+def ver_seleccion_y_total(seleccion, rutas):
+    if len(seleccion) < 2:
+        print("Selecciona mínimo 2 centros.")
+        return
+    total, ruta = costo_total_seleccion(seleccion, rutas)
+    if total == math.inf:
+        print("No se pudo calcular (hay tramos sin conexión).")
+    else:
+        print("Centros seleccionados:", seleccion)
+        print("Costo total:", total)
+        print("Ruta total:", " -> ".join(map(str, ruta)))
+
+
+def guardar_ruta_cliente(nombre_cliente, seleccion, rutas):
+    if len(seleccion) < 2:
+        print("Debes seleccionar mínimo 2 centros.")
+        return
+    total, ruta = costo_total_seleccion(seleccion, rutas)
+    if total == math.inf:
+        print("No se puede guardar: hay tramos sin conexión.")
+        return
+
+    filename = f"rutas-{nombre_cliente}.txt"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(f"Cliente: {nombre_cliente}\n")
+        f.write("Centros seleccionados: " + ",".join(map(str, seleccion)) + "\n")
+        f.write("Ruta total: " + " -> ".join(map(str, ruta)) + "\n")
+        f.write(f"Costo total: {total}\n")
+
+    print("Ruta guardada en:", filename)
 
 
 def main():
-    core.asegurar_archivos()
-    users = core.leer_usuarios()
-    centros, rutas = core.leer_centros_rutas()
+    asegurar_archivos()
+    users = leer_usuarios()
+    centros, rutas = leer_centros_rutas()
 
     while True:
         op = menu_principal()
@@ -439,16 +735,23 @@ def main():
                     elif op == "3":
                         eliminar_centro(centros, rutas)
                     elif op == "4":
-                        ver_rutas(rutas)
+                        actualizar_centro(centros)
                     elif op == "5":
-                        agregar_ruta(rutas)
+                        ver_rutas(rutas)
                     elif op == "6":
-                        core.guardar_centros_rutas(centros, rutas)
-                        print("Datos guardados")
+                        agregar_ruta(rutas)
                     elif op == "7":
+                        listar_ordenado_admin(centros, rutas)
+                    elif op == "8":
+                        buscar_centro_menu(centros)
+                    elif op == "9":
+                        guardar_centros_rutas(centros, rutas)
+                        print("Datos guardados")    
+                    elif op == "10":
                         break
                     pause()
             else:
+                seleccion = []
                 while True:
                     op = menu_cliente()
                     if op == "1":
@@ -462,7 +765,17 @@ def main():
                     elif op == "5":
                         ver_arbol(centros)
                     elif op == "6":
+                        seleccionar_centros(centros, seleccion)   
+                    elif op == "7":
+                        ver_seleccion_y_total(seleccion, rutas)   
+                    elif op == "8":
+                        eliminar_de_seleccion(seleccion)          
+                    elif op == "9":
+                        nombre_archivo = user.get("nombre", "cliente").replace(" ", "_")
+                        guardar_ruta_cliente(nombre_archivo, seleccion, rutas) 
+                    elif op == "10":
                         break
+
                     pause()
 
         elif op == "2":
