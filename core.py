@@ -281,3 +281,68 @@ def existe_ruta(rutas, a, b):
     
 def eliminar_rutas_de_centro(rutas, cid):
     return [r for r in rutas if r.a != cid and r.b != cid]
+
+def pause():
+    input("\nPresione ENTER para continuar...")
+
+def menu_principal():
+    print("\n=== POLIDELIVERY ===")
+    print("1. Iniciar sesión")
+    print("2. Registrarse")
+    print("3. Salir")
+    return input("Opción: ")
+
+def menu_admin():
+    print("\n--- MENÚ ADMIN ---")
+    print("1. Ver centros")
+    print("2. Agregar centro")
+    print("3. Eliminar centro")
+    print("4. Ver rutas")
+    print("5. Agregar ruta")
+    print("6. Guardar cambios")
+    print("7. Cerrar sesión")
+    return input("Opción: ")
+
+def menu_cliente():
+    print("\n--- MENÚ CLIENTE ---")
+    print("1. Ver mapa")
+    print("2. Ruta óptima (Dijkstra)")
+    print("3. BFS")
+    print("4. DFS")
+    print("5. Árbol de regiones")
+    print("6. Cerrar sesión")
+    return input("Opción: ")
+
+def login(users):
+    email = input("Email: ").strip()
+    pw = input("Contraseña: ").strip()
+    for u in users:
+        if u["email"] == email and u["password"] == pw:
+            return u
+    return None
+
+def register(users):
+    nombre = input("Nombre: ")
+    ident = input("Identificación: ")
+    edad = input("Edad: ")
+    email = input("Email (@gmail.com): ")
+    pw = input("Contraseña: ")
+
+    if not email_valido(email):
+        print("Email inválido")
+        return
+
+    if not password_valida(pw):
+        print("Contraseña débil")
+        return
+
+    users.append({
+        "email": email,
+        "password": pw,
+        "nombre": nombre,
+        "identificacion": ident,
+        "edad": edad,
+        "rol": "cliente"
+    })
+    guardar_usuarios(users)
+    print("Registro exitoso")
