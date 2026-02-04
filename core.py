@@ -176,36 +176,108 @@ def build_graph(rutas):
         g.setdefault(r.b, []).append((r.a, r.distancia, r.costo))
     return g
 
+def dijkstra_costo(grafo, inicio, destino):
+    if inicio == destino:
+        return 0.0, [inicio]
 
-def dijkstra_cost(g, start, goal):
-    if start == goal:
-        return 0.0, [start]
-    dist, prev = {}, {}
-    for k in g:
-        dist[k] = math.inf
-        prev[k] = None
-    dist[start] = 0.0
-    pq = [(0.0, start)]
-    seen = {}
-    while pq:
-        d, u = heapq.heappop(pq)
-        if seen.get(u):
+    distancias = {}
+    previo = {}
+
+    for nodo in grafo:
+        distancias[nodo] = math.inf
+        previo[nodo] = None
+
+    distancias[inicio] = 0.0
+    cola_prioridad = [(0.0, inicio)]
+    visitados = {}
+
+    while cola_prioridad:
+        distancia_actual, nodo_actual = heapq.heappop(cola_prioridad)
+
+        if visitados.get(nodo_actual):
             continue
-        seen[u] = True
-        if u == goal:
+
+        visitados[nodo_actual] = True
+
+        if nodo_actual == destino:
             break
-        for v, _, cost in g.get(u, []):
-            nd = d + cost
-            if nd < dist.get(v, math.inf):
-                dist[v] = nd
-                prev[v] = u
-                heapq.heappush(pq, (nd, v))
-    if dist.get(goal, math.inf) == math.inf:
+
+        for vecino, _, costo in grafo.get(nodo_actual, []):
+            nueva_distancia = distancia_actual + costo
+            if nueva_distancia < distancias.get(vecino, math.inf):
+                distancias[vecino] = nueva_distancia
+                previo[vecino] = nodo_actual
+                heapq.heappush(cola_prioridad, (nueva_distancia, vecino))
+
+    if distancias.get(destino, math.inf) == math.inf:
         return math.inf, []
-    path = []
-    cur = goal
-    while cur is not None:
-        path.append(cur)
-        cur = prev.get(cur)
-    path.reverse()
-    return dist[goal], path
+
+    camino = []
+    actual = destino
+    while actual is not None:
+        camino.append(actual)
+        actual = previo.get(actual)
+
+    camino.reverse()
+    return distancias[destino], camino
+
+def bfs_cercanos(grafo, inicio, max_saltos):
+    if inicio not in grafo:
+        return []
+
+    cola = [inicio]
+    indice = 0
+    niveles = {inicio: 0}
+    resultado = []
+
+    while indice < len(cola):
+        nodo_actual = cola[indice]
+        indice += 1
+        resultado.append(nodo_actual)
+
+        if niveles[nodo_actual] >= max_saltos:
+            continue
+
+        for vecino, _, _ in grafo.get(nodo_actual, []):
+            if vecino not in niveles:
+                niveles[vecino] = niveles[nodo_actual] + 1
+                cola.append(vecino)
+
+    return resultado
+
+def dfs_recorrido(grafo, inicio):
+    visitados = {}
+    resultado = []
+    pila = [inicio]
+
+    while pila:
+        nodo_actual = pila.pop()
+
+        if visitados.get(nodo_actual):
+            continue
+
+        visitados[nodo_actual] = True
+        resultado.append(nodo_actual)
+
+        vecinos = [v for (v, _, _) in grafo.get(nodo_actual, [])]
+        for vecino in reversed(vecinos):
+            if not visitados.get(vecino):
+                pila.append(vecino)
+
+    return resultado
+
+def lineas_arbol_regiones(centros):
+    root = RegionNode("ROOT")
+    for c in centros:
+        root.add(c.region, c.subregion, c.cid)
+    by = {c.cid: c for c in centros}
+    return root.render(by)
+
+def existe_ruta(rutas, a, b):
+    for r in rutas:
+        if (r.a == a and r.b == b) or (r.a == b and r.b == a):
+            return True
+    return False
+    
+def eliminar_rutas_de_centro(rutas, cid):
+    return [r for r in rutas if r.a != cid and r.b != cid]
