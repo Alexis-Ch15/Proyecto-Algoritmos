@@ -139,3 +139,34 @@ def password_valida(pw):
     if len(pw) < 8:
         return False
     return any("a" <= c <= "z" for c in pw) and any("A" <= c <= "Z" for c in pw) and any("0" <= c <= "9" for c in pw)
+
+
+def buscar_centro(centros, cid):
+    for c in centros:
+        if c.cid == cid:
+            return c
+    return None
+
+
+def merge_sort(items, key_fn):
+    a = items[:]
+    if len(a) <= 1:
+        return a
+    mid = len(a) // 2
+    left = merge_sort(a[:mid], key_fn)
+    right = merge_sort(a[mid:], key_fn)
+    out = []
+    i = 0
+    j = 0
+    while i < len(left) and j < len(right):
+        if key_fn(left[i]) <= key_fn(right[j]):
+            out.append(left[i])
+            i += 1
+        else:
+            out.append(right[j])
+            j += 1
+    out.extend(left[i:])
+    out.extend(right[j:])
+    return out
+
+
