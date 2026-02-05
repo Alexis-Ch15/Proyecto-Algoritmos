@@ -525,4 +525,101 @@ def costo_total_seleccion(seleccion, rutas):
             ruta_total.extend(path[1:])
     return total, ruta_total
 
-##Recorrido de rutass
+def ver_seleccion_y_total(seleccion, rutas):
+    if len(seleccion) < 2:
+        print("Selecciona mínimo 2 centros.")
+        return
+    total, ruta = costo_total_seleccion(seleccion, rutas)
+    if total == math.inf:
+        print("No se pudo calcular (hay tramos sin conexión).")
+    else:
+        print("Centros seleccionados:", seleccion)
+        print("Costo total:", total)
+        print("Ruta total:", " -> ".join(map(str, ruta)))
+
+def guardar_ruta_cliente(nombre_cliente, seleccion, rutas):
+    if len(seleccion) < 2:
+        print("Debes seleccionar mínimo 2 centros.")
+        return
+    total, ruta = costo_total_seleccion(seleccion, rutas)
+    if total == math.inf:
+        print("No se puede guardar: hay tramos sin conexión.")
+        return
+    filename = f"rutas-{nombre_cliente}.txt"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(f"Cliente: {nombre_cliente}\n")
+        f.write("Centros seleccionados: " + ",".join(map(str, seleccion)) + "\n")
+        f.write("Ruta total: " + " -> ".join(map(str, ruta)) + "\n")
+        f.write(f"Costo total: ${total}\n")
+    print("Ruta guardada en:", filename)
+
+def main():
+    asegurar_archivos()
+    users = leer_usuarios()
+    centros, rutas = leer_centros_rutas()
+    while True:
+        op = menu_principal()
+        if op == "1":
+            user = login(users)
+            if not user:
+                print("Credenciales incorrectas")
+                continue
+            if user["rol"] == "admin":
+                while True:
+                    op = menu_admin()
+                    if op == "1":
+                        ver_centros(centros)
+                    elif op == "2":
+                        agregar_centro(centros)
+                    elif op == "3":
+                        eliminar_centro(centros, rutas)
+                    elif op == "4":
+                        actualizar_centro(centros)
+                    elif op == "5":
+                        ver_rutas(rutas, centros)
+                    elif op == "6":
+                        agregar_ruta(rutas, centros)
+                    elif op == "7":
+                        listar_ordenado_admin(centros, rutas)
+                    elif op == "8":
+                        buscar_centro_menu(centros)
+                    elif op == "9":
+                        guardar_centros_rutas(centros, rutas)
+                        print("Datos guardados")
+                    elif op == "10":
+                        break
+                    pause()
+            else:
+                seleccion = []
+                while True:
+                    op = menu_cliente()
+                    if op == "1":
+                        ver_mapa(rutas, centros)
+                    elif op == "2":
+                        ruta_optima(rutas)
+                    elif op == "3":
+                        bfs(rutas)
+                    elif op == "4":
+                        dfs(rutas)
+                    elif op == "5":
+                        ver_arbol(centros)
+                    elif op == "6":
+                        seleccionar_centros(centros, seleccion)
+                    elif op == "7":
+                        ver_seleccion_y_total(seleccion, rutas)
+                    elif op == "8":
+                        eliminar_de_seleccion(seleccion)
+                    elif op == "9":
+                        nombre_archivo = user.get("nombre", "cliente").replace(" ", "_")
+                        guardar_ruta_cliente(nombre_archivo, seleccion, rutas)
+                    elif op == "10":
+                        break
+                    pause()
+        elif op == "2":
+            register(users)
+        elif op == "3":
+            print("Saliendo.")
+            break
+
+if __name__ == "__main__":
+    main()
