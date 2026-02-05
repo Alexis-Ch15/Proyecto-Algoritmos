@@ -202,3 +202,226 @@ def bfs_near(g, start, max_steps):
                 q.append(v)
     return out
     #centro y rutas con diccionarios
+def dfs_traverse(g, start):
+    seen = {}
+    out = []
+    stack = [start]
+    while stack:
+        u = stack.pop()
+        if seen.get(u):
+            continue
+        seen[u] = True
+        out.append(u)
+        neigh = [v for (v, _, _) in g.get(u, [])]
+        for v in reversed(neigh):
+            if not seen.get(v):
+                stack.append(v)
+    return out
+
+def lineas_arbol_regiones(centros):
+    arbol = {}
+    centros_by_id = {}
+    for c in centros:
+        centros_by_id[c["cid"]] = c
+        reg = c["region"]
+        sub = c["subregion"]
+        if reg not in arbol:
+            arbol[reg] = {}
+        if sub not in arbol[reg]:
+            arbol[reg][sub] = []
+        arbol[reg][sub].append(c["cid"])
+    out = []
+    for reg in sorted(arbol):
+        out.append(reg)
+        for sub in sorted(arbol[reg]):
+            out.append("  - " + sub)
+            for cid in sorted(arbol[reg][sub]):
+                c = centros_by_id.get(cid)
+                if c:
+                    out.append(f"      * {c['cid']} | {c['nombre']}")
+    return out
+
+def existe_ruta(rutas, a, b):
+    for r in rutas:
+        if (r["a"] == a and r["b"] == b) or (r["a"] == b and r["b"] == a):
+            return True
+    return False
+
+def eliminar_rutas_de_centro(rutas, cid):
+    return [r for r in rutas if r["a"] != cid and r["b"] != cid]
+
+def pause():
+    input("\nPresione ENTER para continuar...")
+
+def menu_principal():
+    print("\n=== POLIDELIVERY ===")
+    print("1. Iniciar sesión")
+    print("2. Registrarse")
+    print("3. Salir")
+    return input("Opción: ")
+
+def menu_admin():
+    print("\n--- MENÚ ADMIN ---")
+    print("1. Ver centros")
+    print("2. Agregar centro")
+    print("3. Eliminar centro")
+    print("4. Actualizar centro")
+    print("5. Ver rutas")
+    print("6. Agregar ruta")
+    print("7. Listar ordenado (Merge Sort)")
+    print("8. Buscar centro (Lineal)")
+    print("9. Guardar cambios")
+    print("10. Cerrar sesión")
+    return input("Opción: ")
+
+def menu_cliente():
+    print("\n--- MENÚ CLIENTE ---")
+    print("1. Ver mapa")
+    print("2. Ruta óptima (Dijkstra)")
+    print("3. BFS")
+    print("4. DFS")
+    print("5. Árbol de regiones")
+    print("6. Seleccionar centros para envío")
+    print("7. Ver selección y costo total")
+    print("8. Eliminar centro de selección")
+    print("9. Guardar ruta del cliente")
+    print("10. Cerrar sesión")
+    return input("Opción: ")
+
+def login(users):
+    email = input("Email: ").strip()
+    pw = input("Contraseña: ").strip()
+    for u in users:
+        if u["email"] == email and u["password"] == pw:
+            return u
+    return None
+
+def register(users):
+    nombre = input("Nombre: ")
+    ident = input("Identificación: ")
+    edad = input("Edad: ")
+    email = input("Email (@gmail.com): ")
+    pw = input("Contraseña: ")
+    if not identificacion_valida(ident):
+        print("***** Error *****\nLa identificación debe tener 10 dígitos.\nIntentelo de nuevo.")
+        return
+    if not edad_valida(edad):
+        print("***** Error *****\nLa edad no puede ser negativa.\nIntentelo de nuevo.")
+        return
+    if not email_valido(email):
+        print("***** Error *****\nEmail inválido.\nIntentelo de nuevo.")
+        return
+    if not password_valida(pw):
+        print("***** Error *****\nLa contraseña es debil.\nIntentelo de nuevo.")
+        return
+    users.append({
+        "email": email,
+        "password": pw,
+        "nombre": nombre,
+        "identificacion": ident,
+        "edad": edad,
+        "rol": "cliente"
+    })
+    guardar_usuarios(users)
+    print("Registro exitoso")
+
+def ver_centros(centros):
+    print("\n--- CENTROS ---")
+    for c in centros:
+        print(f"{c['cid']} | {c['nombre']} | {c['region']} | {c['subregion']}")
+
+def agregar_centro(centros):
+    cid = int(input("ID: "))
+    if buscar_centro(centros, cid):
+        print("Ese ID ya existe")
+        return
+    nombre = input("Nombre: ")
+    region = input("Región: ")
+    sub = input("Subregión: ")
+    centros.append({"cid": cid, "nombre": nombre, "region": region, "subregion": sub})
+    print("Centro agregado")
+
+def actualizar_centro(centros):
+    cid = int(input("ID del centro a actualizar: "))
+    c = buscar_centro(centros, cid)
+    if not c:
+        print("Centro no encontrado")
+        return
+    print("Deja vacío para mantener el valor actual.")
+    nuevo_nombre = input(f"Nombre ({c['nombre']}): ").strip()
+    nueva_region = input(f"Región ({c['region']}): ").strip()
+    nueva_sub = input(f"Subregión ({c['subregion']}): ").strip()
+    if nuevo_nombre:
+        c["nombre"] = nuevo_nombre
+    if nueva_region:
+        c["region"] = nueva_region
+    if nueva_sub:
+        c["subregion"] = nueva_sub
+    print("Centro actualizado")
+
+def eliminar_centro(centros, rutas):
+    cid = int(input("ID del centro a eliminar: "))
+    if not buscar_centro(centros, cid):
+        print("Centro no encontrado")
+        return
+    centros[:] = [c for c in centros if c["cid"] != cid]
+    rutas[:] = eliminar_rutas_de_centro(rutas, cid)
+    print("Centro y rutas asociadas eliminados")
+
+def ver_rutas(rutas, centros):
+    print("\n--- RUTAS ---")
+    nombres = {c["cid"]: c["nombre"] for c in centros}
+    for r in rutas:
+        nombre_a = nombres.get(r["a"], str(r["a"]))
+        nombre_b = nombres.get(r["b"], str(r["b"]))
+        print(f"{nombre_a} <-> {nombre_b} | Distancia {r['distancia']}km | Costo ${r['costo']}")
+
+def agregar_ruta(rutas, centros):
+    a = int(input("Centro A: "))
+    b = int(input("Centro B: "))
+    if a == b:
+        print("No puedes crear una ruta del centro al mismo centro")
+        return
+    ids = {c["cid"] for c in centros}
+    if a not in ids or b not in ids:
+        print("Uno de los IDs no existe")
+        return
+    if existe_ruta(rutas, a, b):
+        print("La ruta ya existe")
+        return
+    d = float(input("Distancia: "))
+    c = float(input("Costo: "))
+    rutas.append({"a": a, "b": b, "distancia": d, "costo": c})
+    print("Ruta agregada")
+
+def listar_ordenado_admin(centros, rutas):
+    print("\n¿Qué quieres ordenar?")
+    print("1. Centros por ID")
+    print("2. Centros por nombre")
+    print("3. Rutas por costo")
+    print("4. Rutas por distancia")
+    target = input("Opción: ")
+    if target == "1":
+        items = centros
+        key = lambda c: c["cid"]
+    elif target == "2":
+        items = centros
+        key = lambda c: c["nombre"].lower()
+    elif target == "3":
+        items = rutas
+        key = lambda r: r["costo"]
+    elif target == "4":
+        items = rutas
+        key = lambda r: r["distancia"]
+    else:
+        print("Opción inválida")
+        return
+    ordered = merge_sort(items, key)
+    print("\n--- RESULTADO ORDENADO ---")
+    if items is centros:
+        for c in ordered:
+            print(f"{c['cid']} | {c['nombre']} | {c['region']} | {c['subregion']}")
+    else:
+        for r in ordered:
+            print(f"{r['a']} <-> {r['b']} | Distancia {r['distancia']}km | Costo ${r['costo']}")
+##----Funciones del Menu con nuevo llamado, (Diccionario)
