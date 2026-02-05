@@ -424,4 +424,105 @@ def listar_ordenado_admin(centros, rutas):
     else:
         for r in ordered:
             print(f"{r['a']} <-> {r['b']} | Distancia {r['distancia']}km | Costo ${r['costo']}")
-##----Funciones del Menu con nuevo llamado, (Diccionario)
+
+def buscar_centro_menu(centros):
+    cid = int(input("ID a buscar: "))
+    c = buscar_centro(centros, cid)
+    if c:
+        print(f"Encontrado: {c['cid']} | {c['nombre']} | {c['region']} | {c['subregion']}")
+    else:
+        print("No encontrado")
+
+def ver_mapa(rutas, centros):
+    g = build_graph(rutas)
+    nombres = {c["cid"]: c["nombre"] for c in centros}
+
+    print("\n" + "="*40)
+    print(":::MAPA DE CONEXIONES:::")
+    print("="*40)
+
+    for origen_id in g:
+        nombre_origen = nombres.get(origen_id, str(origen_id))
+        print(f"{nombre_origen}")
+        print("-"*30)
+        for (destino_id, dist, cost) in g[origen_id]:
+            nombre_destino = nombres.get(destino_id, str(destino_id)) 
+            print(f"   ➝ {nombre_destino} | Dist: {dist} km | Costo: ${cost}")
+
+def ruta_optima(rutas):
+    a = int(input("Origen ID: "))
+    b = int(input("Destino ID: "))
+    g = build_graph(rutas)
+    cost, path = dijkstra_cost(g, a, b)
+    if cost == math.inf:
+        print("No hay ruta")
+    else:
+        print("Costo:", cost)
+        print("Ruta:", " -> ".join(map(str, path)))
+
+def bfs(rutas):
+    start = int(input("Inicio: "))
+    steps = int(input("Saltos: "))
+    g = build_graph(rutas)
+    print(bfs_near(g, start, steps))
+
+def dfs(rutas):
+    start = int(input("Inicio: "))
+    g = build_graph(rutas)
+    print(dfs_traverse(g, start))
+
+def ver_arbol(centros):
+    for line in lineas_arbol_regiones(centros):
+        print(line)
+
+def seleccionar_centros(centros, seleccion):
+    ids_validos = {c["cid"] for c in centros}
+    print("\n--- SELECCIÓN DE CENTROS ---")
+    print("Ingresa IDs (mínimo 2). Escribe 0 para terminar.")
+    while True:
+        cid = int(input("ID: "))
+        if cid == 0:
+            break
+        if cid not in ids_validos:
+            print("ID no existe")
+            continue
+        if cid in seleccion:
+            print("Ya está en la selección")
+            continue
+        seleccion.append(cid)
+        print("Agregado.")
+    print("Selección actual:", seleccion)
+    if len(seleccion) < 2:
+        print("Debes seleccionar mínimo 2 centros.")
+
+def eliminar_de_seleccion(seleccion):
+    if not seleccion:
+        print("No hay selección")
+        return
+    cid = int(input("ID a eliminar: "))
+    if cid in seleccion:
+        seleccion.remove(cid)
+        print("Eliminado")
+    else:
+        print("Ese ID no está en la selección")
+
+def costo_total_seleccion(seleccion, rutas):
+    if len(seleccion) < 2:
+        return math.inf, []
+    g = build_graph(rutas)
+    total = 0.0
+    ruta_total = []
+    for i in range(len(seleccion) - 1):
+        a = seleccion[i]
+        b = seleccion[i + 1]
+        cost, path = dijkstra_cost(g, a, b)
+        if cost == math.inf:
+            return math.inf, []
+        total += cost
+        if not ruta_total:
+            ruta_total.extend(path)
+        else:
+            ruta_total.extend(path[1:])
+    return total, ruta_total
+
+##Recorrido de rutass
